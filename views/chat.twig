@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+      <link rel="stylesheet" type="text/css" href="/bootstrap.min.css">
+      <link rel="stylesheet" type="text/css" href="/main.css">
+      <link rel="stylesheet" type="text/css" href="/font.css">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Chat</title>
+  </head>
+  <body>
+  <div style="height: 100vh">
+    <div class="container">
+        <div class="row">
+        <div class="col-sm-12 col-md-12 col-lg-12 mx-auto">
+            <div style="height: 89vh" class="card card-signin mt-5">
+                <div id="logoutContainer">
+                    <div id="counter">1</div>
+                    <button type="button" id="logout" class="btn btn-primary">Logout</button>
+                </div>
+                <div style="overflow-y: auto; height: 93%" id="chat"></div>
+                <textarea style="position: absolute; bottom: 0; width: 100%; height:7%" id="message" type="text"></textarea>
+                
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+    <script src="/jquery-3.3.1.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
+    <script src="/socket.io.js"></script>
+    <script>
+    var username = localStorage.username;
+    $("#logout").click(function() {
+        localStorage.username = null;
+        localStorage.token = null;
+        window.location.replace('/login');
+    })
+    $( document ).ready(function() {
+        $.ajax({
+            url: "/verify",
+            type: "post",
+            data: {
+                'token': localStorage.token
+            }
+        }).done(function(msg) {
+            if(!msg.status) {
+                window.location.replace('/login');
+            }
+        }).fail(function() {
+            window.location.replace('/login');
+        })
+        var socket = io();
+
+        $(document).keypress(function(e) {
+            
+            if(e.which == 13) {
+                var data = {
+                    username: username,
+                    msg: $('#message').val()
+                }
+                if($('#message').val() == '') {
+                    $('#message').val('');
+                    return false;
+                }
+               socket.emit('chat message', data);
+               $('#message').val('');
+               return false;
+            };
+            
+        });
+        socket.on('chat message', function(msg){
+            $('#chat').append($('<li>').addClass('message').text(msg.username+ ": " +msg.msg));
+            $('#chat').scrollTop($('#chat')[0].scrollHeight);
+        });
+        socket.on('counter', function(msg){
+            $('#counter').text(msg);
+        });
+    });
+    </script>
+  </body>
+</html>
